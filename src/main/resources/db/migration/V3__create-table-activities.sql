@@ -2,7 +2,7 @@ CREATE TABLE activities
 (
     id        SERIAL PRIMARY KEY,
     trip_id   INT          NOT NULL,
-    code      VARCHAR(255) NOT NULL UNIQUE,
+    code      UUID NOT NULL UNIQUE,
     title     VARCHAR(255) NOT NULL,
     occurs_at TIMESTAMP    NOT NULL,
 

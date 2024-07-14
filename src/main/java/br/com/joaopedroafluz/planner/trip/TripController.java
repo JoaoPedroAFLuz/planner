@@ -1,9 +1,6 @@
 package br.com.joaopedroafluz.planner.trip;
 
-import br.com.joaopedroafluz.planner.activity.Activity;
-import br.com.joaopedroafluz.planner.activity.ActivityCreatedResponse;
-import br.com.joaopedroafluz.planner.activity.ActivityRequestPayload;
-import br.com.joaopedroafluz.planner.activity.ActivityService;
+import br.com.joaopedroafluz.planner.activity.*;
 import br.com.joaopedroafluz.planner.participant.ParticipantInvitedResponse;
 import br.com.joaopedroafluz.planner.participant.ParticipantRequestPayload;
 import br.com.joaopedroafluz.planner.participant.ParticipantResponseDTO;
@@ -48,8 +45,8 @@ public class TripController {
 
         var participants = participantsByTripCode.stream()
                 .map(participant -> new ParticipantResponseDTO(
-                        participant.getCode(),
                         participant.getTrip().getCode(),
+                        participant.getCode(),
                         participant.getName(),
                         participant.getEmail(),
                         participant.getConfirmedAt())
@@ -57,6 +54,27 @@ public class TripController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok().body(participants);
+    }
+
+    @GetMapping("/{tripCode}/activities")
+    public ResponseEntity<List<ActivityResponseDTO>> findActivitiesByTripCode(@PathVariable("tripCode") UUID tripCode) {
+        var trip = tripRepository.findByCode(tripCode);
+
+        if (trip.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var activitiesByTripCode = activityService.findActivitiesByTripCode(tripCode);
+
+        var activityResponseDTOS = activitiesByTripCode.stream()
+                .map(activity -> new ActivityResponseDTO(
+                        activity.getTrip().getCode(),
+                        activity.getCode(),
+                        activity.getTitle(),
+                        activity.getOccursAt()))
+                .toList();
+
+        return ResponseEntity.ok().body(activityResponseDTOS);
     }
 
     @PostMapping
