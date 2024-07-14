@@ -32,7 +32,7 @@ public class TripController {
 
         tripRepository.save(newTrip);
 
-        participantService.registerParticipantsTotEvent(payload.emailsToInvite(), newTrip.getCode());
+        participantService.registerParticipantsTotEvent(payload.emailsToInvite(), newTrip);
 
         return ResponseEntity.ok(new TripCreateResponse(newTrip.getCode()));
     }
@@ -58,7 +58,7 @@ public class TripController {
     }
 
     @PatchMapping("/{tripCode}/confirm")
-    public ResponseEntity<Object> confirmTrip(@PathVariable("tripCode") UUID tripCode) {
+    public ResponseEntity<String> confirmTrip(@PathVariable("tripCode") UUID tripCode) {
         var trip = tripRepository.findByCode(tripCode);
 
         if (trip.isEmpty()) {
