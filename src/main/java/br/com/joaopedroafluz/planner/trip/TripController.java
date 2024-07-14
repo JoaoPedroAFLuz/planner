@@ -1,6 +1,13 @@
 package br.com.joaopedroafluz.planner.trip;
 
-import br.com.joaopedroafluz.planner.participant.*;
+import br.com.joaopedroafluz.planner.activity.Activity;
+import br.com.joaopedroafluz.planner.activity.ActivityCreatedResponse;
+import br.com.joaopedroafluz.planner.activity.ActivityRequestPayload;
+import br.com.joaopedroafluz.planner.activity.ActivityService;
+import br.com.joaopedroafluz.planner.participant.ParticipantInvitedResponse;
+import br.com.joaopedroafluz.planner.participant.ParticipantRequestPayload;
+import br.com.joaopedroafluz.planner.participant.ParticipantResponseDTO;
+import br.com.joaopedroafluz.planner.participant.ParticipantService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +25,7 @@ import java.util.stream.Collectors;
 public class TripController {
 
     private final TripRepository tripRepository;
+    private final ActivityService activityService;
     private final ParticipantService participantService;
 
     @GetMapping("/{tripCode}")
@@ -80,6 +88,28 @@ public class TripController {
         }
 
         return ResponseEntity.ok(new ParticipantInvitedResponse(participant.getCode()));
+    }
+
+    @PostMapping("/{tripCode}/activities")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<ActivityCreatedResponse> createActivity(@PathVariable UUID tripCode,
+                                                                  @RequestBody ActivityRequestPayload payload) {
+        var trip = tripRepository.findByCode(tripCode);
+
+        if (trip.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var newActivity = Activity.builder()
+                .trip(trip.get())
+                .code(UUID.randomUUID())
+                .title(payload.title())
+                .occursAt(LocalDateTime.parse(payload.occursAt(), DateTimeFormatter.ISO_DATE_TIME))
+                .build();
+
+        var activityPersisted = activityService.save(newActivity);
+
+        return ResponseEntity.ok(new ActivityCreatedResponse(activityPersisted.getCode()));
     }
 
     @PutMapping("/{tripCode}")

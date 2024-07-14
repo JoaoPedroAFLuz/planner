@@ -7,5 +7,5 @@ CREATE TABLE participants
     email        VARCHAR(255) NOT NULL,
     confirmed_at TIMESTAMP,
 
-    FOREIGN KEY (trip_id) REFERENCES trips (id)
+    FOREIGN KEY (trip_id) REFERENCES trips (id) ON DELETE CASCADE
 );
