@@ -39,7 +39,7 @@ public class Trip {
     private LocalDateTime endsAt;
 
     @Column(name = "confirmed_at")
-    private LocalDateTime confirmed_at;
+    private LocalDateTime confirmedAt;
 
 
     public Trip(TripRequestPayload payload) {

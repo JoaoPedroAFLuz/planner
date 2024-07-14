@@ -33,7 +33,6 @@ public class TripController {
         tripRepository.save(newTrip);
 
         participantService.registerParticipantsTotEvent(payload.emailsToInvite(), newTrip.getCode());
-        participantService.triggerConfirmationEmailToParticipant(newTrip.getCode());
 
         return ResponseEntity.ok(new TripCreateResponse(newTrip.getCode()));
     }
@@ -56,6 +55,26 @@ public class TripController {
         tripRepository.save(trip.get());
 
         return ResponseEntity.ok(trip.get());
+    }
+
+    @PatchMapping("/{tripCode}/confirm")
+    public ResponseEntity<Object> confirmTrip(@PathVariable("tripCode") UUID tripCode) {
+        var trip = tripRepository.findByCode(tripCode);
+
+        if (trip.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (trip.get().getConfirmedAt() != null) {
+            return ResponseEntity.badRequest().body("Trip already confirmed");
+        }
+
+        trip.get().setConfirmedAt(LocalDateTime.now());
+
+        tripRepository.save(trip.get());
+        participantService.triggerConfirmationEmailToParticipant(trip.get().getCode());
+
+        return ResponseEntity.ok().body("Trip confirmed");
     }
 
 }
