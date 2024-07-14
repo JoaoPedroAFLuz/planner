@@ -1,10 +1,7 @@
 package br.com.joaopedroafluz.planner.trip;
 
 import br.com.joaopedroafluz.planner.activity.*;
-import br.com.joaopedroafluz.planner.link.Link;
-import br.com.joaopedroafluz.planner.link.LinkRequestPayload;
-import br.com.joaopedroafluz.planner.link.LinkResponseDTO;
-import br.com.joaopedroafluz.planner.link.LinkService;
+import br.com.joaopedroafluz.planner.link.*;
 import br.com.joaopedroafluz.planner.participant.ParticipantInvitedResponse;
 import br.com.joaopedroafluz.planner.participant.ParticipantRequestPayload;
 import br.com.joaopedroafluz.planner.participant.ParticipantResponseDTO;
@@ -180,9 +177,30 @@ public class TripController {
     }
 
     // Links
+    @GetMapping("/{tripCode}/links")
+    public ResponseEntity<List<LinkResponseDTO>> findLinksByTripCode(@PathVariable UUID tripCode) {
+        var trip = tripRepository.findByCode(tripCode);
+
+        if (trip.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var linkPersisted = linkService.findAllByTripCode(tripCode);
+
+        var linkResponseDTOs = linkPersisted.stream()
+                .map(link -> new LinkResponseDTO(
+                        link.getTrip().getCode(),
+                        link.getCode(),
+                        link.getTitle(),
+                        link.getUrl()))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok().body(linkResponseDTOs);
+    }
+
     @PostMapping("/{tripCode}/links")
-    public ResponseEntity<LinkResponseDTO> registerLink(@PathVariable UUID tripCode,
-                                                        @RequestBody LinkRequestPayload payload) {
+    public ResponseEntity<LinkCreatedResponse> registerLink(@PathVariable UUID tripCode,
+                                                            @RequestBody LinkRequestPayload payload) {
         var trip = tripRepository.findByCode(tripCode);
 
         if (trip.isEmpty()) {
@@ -198,7 +216,7 @@ public class TripController {
 
         var linkPersisted = linkService.save(newLink);
 
-        return ResponseEntity.ok().body(new LinkResponseDTO(linkPersisted.getCode()));
+        return ResponseEntity.ok().body(new LinkCreatedResponse(linkPersisted.getCode()));
     }
 
 }
