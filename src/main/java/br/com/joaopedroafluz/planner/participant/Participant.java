@@ -20,6 +20,10 @@ public class Participant {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    @JoinColumn(name = "trip_id", nullable = false)
+    private Trip trip;
+
     private UUID code;
 
     private String name;
@@ -28,9 +32,5 @@ public class Participant {
 
     @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt;
-
-    @ManyToOne
-    @JoinColumn(name = "trip_id", nullable = false)
-    private Trip trip;
 
 }

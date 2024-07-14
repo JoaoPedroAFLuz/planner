@@ -1,5 +1,7 @@
 package br.com.joaopedroafluz.planner.trip;
 
+import br.com.joaopedroafluz.planner.participant.ParticipantInvitedResponse;
+import br.com.joaopedroafluz.planner.participant.ParticipantRequestPayload;
 import br.com.joaopedroafluz.planner.participant.ParticipantService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -37,6 +39,25 @@ public class TripController {
         return ResponseEntity.ok(new TripCreateResponse(newTrip.getCode()));
     }
 
+    @PostMapping("/{tripCode}/invite")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<ParticipantInvitedResponse> inviteParticipants(@PathVariable UUID tripCode,
+                                                                         @RequestBody ParticipantRequestPayload payload) {
+        var trip = tripRepository.findByCode(tripCode);
+
+        if (trip.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var participant = participantService.registerParticipantTotEvent(payload.email(), trip.get());
+
+        if (trip.get().getConfirmedAt() != null) {
+            participantService.triggerConfirmationEmailToParticipant(payload.email());
+        }
+
+        return ResponseEntity.ok(new ParticipantInvitedResponse(participant.getCode()));
+    }
+
     @PutMapping("/{tripCode}")
     public ResponseEntity<Trip> updateTrip(@PathVariable("tripCode") UUID tripCode,
                                            @RequestBody TripRequestPayload payload) {
@@ -72,7 +93,7 @@ public class TripController {
         trip.get().setConfirmedAt(LocalDateTime.now());
 
         tripRepository.save(trip.get());
-        participantService.triggerConfirmationEmailToParticipant(trip.get().getCode());
+        participantService.triggerConfirmationEmailToParticipants(trip.get().getCode());
 
         return ResponseEntity.ok().body("Trip confirmed");
     }

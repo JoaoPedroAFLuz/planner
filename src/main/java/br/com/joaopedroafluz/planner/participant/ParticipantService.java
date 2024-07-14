@@ -14,6 +14,16 @@ public class ParticipantService {
 
     private final ParticipantRepository participantRepository;
 
+    public Participant registerParticipantTotEvent(String participantEmailToInvite, Trip trip) {
+        var participant = Participant.builder()
+                .trip(trip)
+                .code(UUID.randomUUID())
+                .email(participantEmailToInvite)
+                .build();
+
+        return participantRepository.save(participant);
+    }
+
     public void registerParticipantsTotEvent(List<String> participantsEmailsToInvite, Trip trip) {
         var participants = participantsEmailsToInvite.stream()
                 .map(email -> Participant.builder()
@@ -25,7 +35,10 @@ public class ParticipantService {
         participantRepository.saveAll(participants);
     }
 
-    public void triggerConfirmationEmailToParticipant(UUID tripCode) {
+    public void triggerConfirmationEmailToParticipant(String email) {
+    }
+
+    public void triggerConfirmationEmailToParticipants(UUID tripCode) {
     }
 
 }
