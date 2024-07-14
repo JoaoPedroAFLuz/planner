@@ -14,6 +14,10 @@ public class ParticipantService {
 
     private final ParticipantRepository participantRepository;
 
+    public List<Participant> findParticipantsByTripCode(UUID tripCode) {
+        return participantRepository.findAllByTripCode(tripCode);
+    }
+
     public Participant registerParticipantTotEvent(String participantEmailToInvite, Trip trip) {
         var participant = Participant.builder()
                 .trip(trip)

@@ -1,8 +1,6 @@
 package br.com.joaopedroafluz.planner.trip;
 
-import br.com.joaopedroafluz.planner.participant.ParticipantInvitedResponse;
-import br.com.joaopedroafluz.planner.participant.ParticipantRequestPayload;
-import br.com.joaopedroafluz.planner.participant.ParticipantService;
+import br.com.joaopedroafluz.planner.participant.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +8,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/trips")
@@ -25,6 +25,30 @@ public class TripController {
         var trip = tripRepository.findByCode(tripCode);
 
         return trip.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{tripCode}/participants")
+    public ResponseEntity<List<ParticipantResponseDTO>> findParticipantsByTripCode(
+            @PathVariable("tripCode") UUID tripCode) {
+        var trip = tripRepository.findByCode(tripCode);
+
+        if (trip.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var participantsByTripCode = participantService.findParticipantsByTripCode(tripCode);
+
+        var participants = participantsByTripCode.stream()
+                .map(participant -> new ParticipantResponseDTO(
+                        participant.getCode(),
+                        participant.getTrip().getCode(),
+                        participant.getName(),
+                        participant.getEmail(),
+                        participant.getConfirmedAt())
+                )
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok().body(participants);
     }
 
     @PostMapping
