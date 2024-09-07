@@ -25,4 +25,8 @@ public class ActivityService {
         return activityRepository.save(activity);
     }
 
+    public void remove(Activity activity) {
+        activityRepository.delete(activity);
+    }
+
 }

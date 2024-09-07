@@ -214,6 +214,25 @@ public class TripController {
         return ResponseEntity.ok(new ActivityCreatedResponse(activityPersisted.getCode()));
     }
 
+    @DeleteMapping("/{tripCode}/activities/{activityCode}")
+    public ResponseEntity<Void> removeActivity(@PathVariable("tripCode") UUID tripCode, @PathVariable("activityCode") UUID activityCode) {
+        var trip = tripRepository.findByCode(tripCode);
+
+        if (trip.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var activity = activityService.findByCode(activityCode);
+
+        if (activity.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        activityService.remove(activity.get());
+
+        return ResponseEntity.noContent().build();
+    }
+
     public static List<LocalDateTime> getDatesBetween(LocalDateTime startDate, LocalDateTime endDate) {
         List<LocalDateTime> dates = new ArrayList<>();
         LocalDateTime currentDate = startDate;
