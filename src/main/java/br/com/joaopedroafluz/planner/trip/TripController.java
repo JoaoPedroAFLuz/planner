@@ -140,6 +140,27 @@ public class TripController {
         return ResponseEntity.ok(new ParticipantInvitedResponse(participant.getCode()));
     }
 
+    @DeleteMapping("/{tripCode}/participants/{participantCode}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<?> removeParticipant(@PathVariable("tripCode") UUID tripCode,
+                                               @PathVariable("participantCode") UUID participantCode) {
+        var trip = tripRepository.findByCode(tripCode);
+
+        if (trip.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var participant = participantService.findByCode(participantCode);
+
+        if (participant.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        participantService.removeParticipant(participant.get());
+
+        return ResponseEntity.ok().build();
+    }
+
     // Activities
     @GetMapping("/{tripCode}/activities")
     public ResponseEntity<List<ActivitiesResponseDTO>> findActivitiesByTripCode(@PathVariable("tripCode") UUID tripCode) {

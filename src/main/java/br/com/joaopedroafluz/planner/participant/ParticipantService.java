@@ -3,6 +3,7 @@ package br.com.joaopedroafluz.planner.participant;
 import br.com.joaopedroafluz.planner.trip.Trip;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -60,6 +61,11 @@ public class ParticipantService {
     }
 
     public void triggerConfirmationEmailToParticipants(UUID tripCode) {
+    }
+
+    @Transactional
+    public void removeParticipant(Participant participant) {
+        participantRepository.delete(participant);
     }
 
 }
