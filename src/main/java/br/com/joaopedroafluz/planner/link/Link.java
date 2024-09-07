@@ -1,6 +1,6 @@
 package br.com.joaopedroafluz.planner.link;
 
-import br.com.joaopedroafluz.planner.trip.Trip;
+import br.com.joaopedroafluz.planner.activity.Activity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,8 +20,8 @@ public class Link {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "trip_id", nullable = false)
-    private Trip trip;
+    @JoinColumn(name = "activity_id", nullable = false)
+    private Activity activity;
 
     private UUID code;
 

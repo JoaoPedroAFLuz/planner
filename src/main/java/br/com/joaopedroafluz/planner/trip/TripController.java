@@ -1,7 +1,6 @@
 package br.com.joaopedroafluz.planner.trip;
 
 import br.com.joaopedroafluz.planner.activity.*;
-import br.com.joaopedroafluz.planner.link.*;
 import br.com.joaopedroafluz.planner.participant.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,11 +17,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/trips")
 @AllArgsConstructor
+@RequestMapping("/trips")
 public class TripController {
 
-    private final LinkService linkService;
     private final TripRepository tripRepository;
     private final ActivityService activityService;
     private final ParticipantService participantService;
@@ -121,7 +119,7 @@ public class TripController {
         return ResponseEntity.ok().body(participants);
     }
 
-    @PostMapping("/{tripCode}/invite")
+    @PostMapping("/{tripCode}/participants")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<ParticipantInvitedResponse> inviteParticipants(@PathVariable UUID tripCode,
                                                                          @RequestBody ParticipantRequestPayload payload) {
@@ -177,6 +175,7 @@ public class TripController {
                         activity.getTrip().getCode(),
                         activity.getCode(),
                         activity.getTitle(),
+                        activity.getDescription(),
                         activity.getOccursAt()))
                 .toList();
 
@@ -207,55 +206,13 @@ public class TripController {
                 .trip(trip.get())
                 .code(UUID.randomUUID())
                 .title(payload.title())
+                .description(payload.description())
                 .occursAt(LocalDateTime.parse(payload.occursAt(), DateTimeFormatter.ISO_DATE_TIME))
                 .build();
 
         var activityPersisted = activityService.save(newActivity);
 
         return ResponseEntity.ok(new ActivityCreatedResponse(activityPersisted.getCode()));
-    }
-
-    // Links
-    @GetMapping("/{tripCode}/links")
-    public ResponseEntity<List<LinkResponseDTO>> findLinksByTripCode(@PathVariable UUID tripCode) {
-        var trip = tripRepository.findByCode(tripCode);
-
-        if (trip.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        var linkPersisted = linkService.findAllByTripCode(tripCode);
-
-        var linkResponseDTOs = linkPersisted.stream()
-                .map(link -> new LinkResponseDTO(
-                        link.getTrip().getCode(),
-                        link.getCode(),
-                        link.getTitle(),
-                        link.getUrl()))
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok().body(linkResponseDTOs);
-    }
-
-    @PostMapping("/{tripCode}/links")
-    public ResponseEntity<LinkCreatedResponse> registerLink(@PathVariable UUID tripCode,
-                                                            @RequestBody LinkRequestPayload payload) {
-        var trip = tripRepository.findByCode(tripCode);
-
-        if (trip.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        var newLink = Link.builder()
-                .trip(trip.get())
-                .code(UUID.randomUUID())
-                .title(payload.title())
-                .url(payload.url())
-                .build();
-
-        var linkPersisted = linkService.save(newLink);
-
-        return ResponseEntity.ok().body(new LinkCreatedResponse(linkPersisted.getCode()));
     }
 
     public static List<ZonedDateTime> getDatesBetween(ZonedDateTime startDate, ZonedDateTime endDate) {

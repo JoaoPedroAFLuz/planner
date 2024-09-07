@@ -28,6 +28,8 @@ public class Activity {
 
     private String title;
 
+    private String description;
+
     @Column(name = "occurs_at")
     private LocalDateTime occursAt;
 

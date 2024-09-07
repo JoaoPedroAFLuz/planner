@@ -12,8 +12,8 @@ public class LinkService {
 
     private final LinkRepository linkRepository;
 
-    public List<Link> findAllByTripCode(UUID tripCode) {
-        return linkRepository.findAllByTripCode(tripCode);
+    public List<Link> findAllByActivityCode(UUID tripCode) {
+        return linkRepository.findAllByActivityCode(tripCode);
     }
 
     public Link save(Link link) {

@@ -7,6 +7,6 @@ import java.util.UUID;
 
 public interface LinkRepository extends JpaRepository<Link, Long> {
 
-    List<Link> findAllByTripCode(UUID tripCode);
+    List<Link> findAllByActivityCode(UUID tripCode);
 
 }
