@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
@@ -33,13 +33,13 @@ public class Trip {
     private String destination;
 
     @Column(name = "starts_at", nullable = false)
-    private LocalDateTime startsAt;
+    private ZonedDateTime startsAt;
 
     @Column(name = "ends_at", nullable = false)
-    private LocalDateTime endsAt;
+    private ZonedDateTime endsAt;
 
     @Column(name = "confirmed_at")
-    private LocalDateTime confirmedAt;
+    private ZonedDateTime confirmedAt;
 
 
     public Trip(TripRequestPayload payload) {
@@ -47,7 +47,7 @@ public class Trip {
         this.ownerName = payload.ownerName();
         this.ownerEmail = payload.ownerEmail();
         this.destination = payload.destination();
-        this.startsAt = LocalDateTime.parse(payload.startsAt(), DateTimeFormatter.ISO_DATE_TIME);
-        this.endsAt = LocalDateTime.parse(payload.endsAt(), DateTimeFormatter.ISO_DATE_TIME);
+        this.startsAt = ZonedDateTime.parse(payload.startsAt(), DateTimeFormatter.ISO_DATE_TIME);
+        this.endsAt = ZonedDateTime.parse(payload.endsAt(), DateTimeFormatter.ISO_DATE_TIME);
     }
 }

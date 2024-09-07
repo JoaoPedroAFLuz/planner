@@ -1,7 +1,7 @@
 package br.com.joaopedroafluz.planner.activity;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 
-public record ActivitiesResponseDTO(LocalDateTime date, List<ActivityDTO> activities) {
+public record ActivitiesResponseDTO(ZonedDateTime date, List<ActivityDTO> activities) {
 }

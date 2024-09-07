@@ -9,8 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -65,8 +67,8 @@ public class TripController {
         trip.get().setOwnerName(payload.ownerName());
         trip.get().setOwnerEmail(payload.ownerEmail());
         trip.get().setDestination(payload.destination());
-        trip.get().setStartsAt(LocalDateTime.parse(payload.startsAt(), DateTimeFormatter.ISO_DATE_TIME));
-        trip.get().setEndsAt(LocalDateTime.parse(payload.endsAt(), DateTimeFormatter.ISO_DATE_TIME));
+        trip.get().setStartsAt(ZonedDateTime.parse(payload.startsAt(), DateTimeFormatter.ISO_DATE_TIME));
+        trip.get().setEndsAt(ZonedDateTime.parse(payload.endsAt(), DateTimeFormatter.ISO_DATE_TIME));
 
         tripRepository.save(trip.get());
 
@@ -85,7 +87,7 @@ public class TripController {
             return ResponseEntity.badRequest().body("Trip already confirmed");
         }
 
-        trip.get().setConfirmedAt(LocalDateTime.now());
+        trip.get().setConfirmedAt(ZonedDateTime.now());
 
         tripRepository.save(trip.get());
         participantService.triggerConfirmationEmailToParticipants(trip.get().getCode());
@@ -161,8 +163,10 @@ public class TripController {
 
         var activitiesResponseDTOS = dates.stream().map((date) -> (
                 new ActivitiesResponseDTO(date,
-                        activityResponseDTOS.stream().filter((activity) -> activity.occursAt().getDayOfYear() ==
-                                date.getDayOfYear()).collect(Collectors.toList()))
+                        activityResponseDTOS.stream()
+                                .filter((activity) -> activity.occursAt().getDayOfYear() == date.getDayOfYear())
+                                .sorted(Comparator.comparing(ActivityDTO::occursAt))
+                                .collect(Collectors.toList()))
         )).collect(Collectors.toList());
 
         return ResponseEntity.ok().body(activitiesResponseDTOS);
@@ -233,9 +237,9 @@ public class TripController {
         return ResponseEntity.ok().body(new LinkCreatedResponse(linkPersisted.getCode()));
     }
 
-    public static List<LocalDateTime> getDatesBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        List<LocalDateTime> dates = new ArrayList<>();
-        LocalDateTime currentDate = startDate;
+    public static List<ZonedDateTime> getDatesBetween(ZonedDateTime startDate, ZonedDateTime endDate) {
+        List<ZonedDateTime> dates = new ArrayList<>();
+        ZonedDateTime currentDate = startDate;
 
         while (!currentDate.isAfter(endDate)) {
             dates.add(currentDate);
