@@ -2,6 +2,7 @@ package br.com.joaopedroafluz.planner.activity;
 
 import br.com.joaopedroafluz.planner.link.*;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -64,6 +65,27 @@ public class ActivityController {
         var linkPersisted = linkService.save(newLink);
 
         return ResponseEntity.ok().body(new LinkCreatedResponse(linkPersisted.getCode()));
+    }
+
+    @DeleteMapping("/{activityCode}/links/{linkCode}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public ResponseEntity<Void> removeLink(@PathVariable("activityCode") UUID activityCode,
+                                           @PathVariable("linkCode") UUID linkCode) {
+        var activity = activityService.findByCode(activityCode);
+
+        if (activity.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var link = linkService.findByCode(linkCode);
+
+        if (link.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        linkService.remove(link.get());
+
+        return ResponseEntity.ok().build();
     }
 
 }

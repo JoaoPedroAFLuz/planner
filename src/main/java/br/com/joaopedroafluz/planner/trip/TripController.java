@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -65,8 +64,8 @@ public class TripController {
         trip.get().setOwnerName(payload.ownerName());
         trip.get().setOwnerEmail(payload.ownerEmail());
         trip.get().setDestination(payload.destination());
-        trip.get().setStartsAt(ZonedDateTime.parse(payload.startsAt(), DateTimeFormatter.ISO_DATE_TIME));
-        trip.get().setEndsAt(ZonedDateTime.parse(payload.endsAt(), DateTimeFormatter.ISO_DATE_TIME));
+        trip.get().setStartsAt(LocalDateTime.parse(payload.startsAt(), DateTimeFormatter.ISO_DATE_TIME));
+        trip.get().setEndsAt(LocalDateTime.parse(payload.endsAt(), DateTimeFormatter.ISO_DATE_TIME));
 
         tripRepository.save(trip.get());
 
@@ -85,7 +84,7 @@ public class TripController {
             return ResponseEntity.badRequest().body("Trip already confirmed");
         }
 
-        trip.get().setConfirmedAt(ZonedDateTime.now());
+        trip.get().setConfirmedAt(LocalDateTime.now());
 
         tripRepository.save(trip.get());
         participantService.triggerConfirmationEmailToParticipants(trip.get().getCode());
@@ -215,9 +214,9 @@ public class TripController {
         return ResponseEntity.ok(new ActivityCreatedResponse(activityPersisted.getCode()));
     }
 
-    public static List<ZonedDateTime> getDatesBetween(ZonedDateTime startDate, ZonedDateTime endDate) {
-        List<ZonedDateTime> dates = new ArrayList<>();
-        ZonedDateTime currentDate = startDate;
+    public static List<LocalDateTime> getDatesBetween(LocalDateTime startDate, LocalDateTime endDate) {
+        List<LocalDateTime> dates = new ArrayList<>();
+        LocalDateTime currentDate = startDate;
 
         while (!currentDate.isAfter(endDate)) {
             dates.add(currentDate);

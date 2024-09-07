@@ -6,10 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Service
 @AllArgsConstructor
@@ -35,17 +32,20 @@ public class ParticipantService {
         return participantRepository.save(participant);
     }
 
-    public void registerParticipantsTotEvent(Participant participant,
+    public void registerParticipantsTotEvent(Participant owner,
                                              List<String> participantsEmailsToInvite,
                                              Trip trip) {
-        var participants = participantsEmailsToInvite.stream()
-                .map(email -> Participant.builder()
-                        .email(email)
-                        .code(UUID.randomUUID())
-                        .trip(trip).build())
-                .collect(Collectors.toSet());
+        Set<Participant> participants = new LinkedHashSet<>();
+        participants.add(owner);
 
-        participants.add(participant);
+        participantsEmailsToInvite.forEach(email -> {
+            var participant = Participant.builder()
+                    .email(email)
+                    .code(UUID.randomUUID())
+                    .trip(trip).build();
+
+            participants.add(participant);
+        });
 
         participantRepository.saveAll(participants);
     }
