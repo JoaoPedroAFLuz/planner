@@ -3,7 +3,6 @@ package br.com.joaopedroafluz.timely.activity;
 import br.com.joaopedroafluz.timely.trip.Trip;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -33,7 +32,6 @@ public class Activity {
 
     private String description;
 
-    @CreationTimestamp
     @Column(name = "occurs_at")
     private LocalDateTime occursAt;
 

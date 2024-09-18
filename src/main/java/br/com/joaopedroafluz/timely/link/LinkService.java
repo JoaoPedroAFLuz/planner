@@ -13,19 +13,26 @@ public class LinkService {
 
     private final LinkRepository linkRepository;
 
+
     public Optional<Link> findByCode(UUID linkCode) {
         return linkRepository.findByCode(linkCode);
     }
 
-    public List<Link> findAllByActivityCode(UUID tripCode) {
-        return linkRepository.findAllByActivityCode(tripCode);
+    public List<Link> findAllByActivityCode(UUID activityCode) {
+        return linkRepository.findAllByActivityCode(activityCode);
     }
 
-    public Link save(Link link) {
-        return linkRepository.save(link);
+    public void save(Link link) {
+        linkRepository.save(link);
     }
 
-    public void remove(Link link) {
+    public void removeByActivityCodeAndLinkCode(UUID activityCode, UUID linkCode) {
+        var link = findByCode(linkCode).orElseThrow(LinkNotFoundException::new);
+
+        if (!link.getActivity().getCode().equals(activityCode)) {
+            throw new InvalidLinkRequestException("Link não pertence à atividade informada");
+        }
+
         linkRepository.delete(link);
     }
 

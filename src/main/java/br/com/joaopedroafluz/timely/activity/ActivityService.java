@@ -13,6 +13,7 @@ public class ActivityService {
 
     private final ActivityRepository activityRepository;
 
+
     public Optional<Activity> findByCode(UUID code) {
         return activityRepository.findByCode(code);
     }
@@ -21,8 +22,24 @@ public class ActivityService {
         return activityRepository.findAllByTripCode(tripCode);
     }
 
-    public Activity save(Activity activity) {
-        return activityRepository.save(activity);
+    public void save(Activity activity) {
+        var trip = activity.getTrip();
+
+        if (activity.getOccursAt().isBefore(trip.getStartsAt()) || activity.getOccursAt().isAfter(trip.getEndsAt())) {
+            throw new InvalidActivityRequestException("O horário da atividade deve estar dentro do período da viagem.");
+        }
+
+        activityRepository.save(activity);
+    }
+
+    public void removeByCodeAndTripCode(UUID activityCode, UUID tripCode) {
+        var activity = findByCode(activityCode).orElseThrow(ActivityNotFoundException::new);
+
+        if (activity.getTrip().getCode().equals(tripCode)) {
+            remove(activity);
+        } else {
+            throw new InvalidActivityRequestException("Atividade não pertence à viagem informada");
+        }
     }
 
     public void remove(Activity activity) {

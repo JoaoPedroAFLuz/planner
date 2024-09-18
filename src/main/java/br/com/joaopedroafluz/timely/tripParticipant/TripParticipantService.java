@@ -13,8 +13,12 @@ public class TripParticipantService {
     private final TripParticipantRepository tripParticipantRepository;
 
 
-    public Optional<TripParticipant> findByCode(UUID tripCode, UUID userCode) {
+    public Optional<TripParticipant> findByTripCodeAndUserCode(UUID tripCode, UUID userCode) {
         return tripParticipantRepository.findByTripCodeAndUserCode(tripCode, userCode);
+    }
+
+    public void removeByTripCodeAndUserCode(UUID tripCode, UUID userCode) {
+        findByTripCodeAndUserCode(tripCode, userCode).ifPresent(this::remove);
     }
 
     public void remove(TripParticipant tripParticipant) {
