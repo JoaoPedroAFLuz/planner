@@ -1,39 +1,25 @@
 package br.com.joaopedroafluz.timely.user;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
-
 @RestController
-@AllArgsConstructor
+@RequiredArgsConstructor
 @RequestMapping("/users")
 public class UserController {
 
     private final UserService userService;
+    private final UserConverter userConverter;
 
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<UserDTO> registerUser(@RequestBody NewUserDTO newUserDTO) {
-        userService.findByEmail(newUserDTO.email()).ifPresent(user -> {
-            throw new IllegalStateException("Email already in use");
-        });
-
-        var user = User.builder()
-                .code(UUID.randomUUID())
-                .name(newUserDTO.name())
-                .email(newUserDTO.email())
-                .password(newUserDTO.password())
-                .build();
-
+    public UserDTO registerUser(@RequestBody NewUserDTO newUserDTO) {
+        var user = userConverter.dtoToEntity(newUserDTO);
         var registeredUser = userService.registerUser(user);
 
-        var userDTO = new UserDTO(registeredUser.getCode(), registeredUser.getName(), registeredUser.getEmail());
-
-        return ResponseEntity.ok(userDTO);
+        return userConverter.entityToDTO(registeredUser);
     }
 
 }

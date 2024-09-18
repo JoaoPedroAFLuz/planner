@@ -3,7 +3,6 @@ package br.com.joaopedroafluz.timely.activity;
 import br.com.joaopedroafluz.timely.link.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,76 +15,47 @@ import java.util.stream.Collectors;
 public class ActivityController {
 
     private final LinkService linkService;
+    private final LinkConverter linkConverter;
     private final ActivityService activityService;
+    private final ActivityConverter activityConverter;
 
     @GetMapping("/{activityCode}")
-    public ResponseEntity<Activity> findByCode(@PathVariable("activityCode") UUID activityCode) {
-        var activity = activityService.findByCode(activityCode);
+    public ActivityDTO findByCode(@PathVariable("activityCode") UUID activityCode) {
+        var activity = activityService.findByCode(activityCode).orElseThrow(ActivityNotFoundException::new);
 
-        return activity.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        return activityConverter.entityToDTO(activity);
     }
 
     @GetMapping("/{activityCode}/links")
-    public ResponseEntity<List<LinkResponseDTO>> findLinksByTripCode(@PathVariable UUID activityCode) {
-        var activity = activityService.findByCode(activityCode);
-
-        if (activity.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+    public List<LinkDTO> findLinksByTripCode(@PathVariable UUID activityCode) {
+        activityService.findByCode(activityCode).orElseThrow(ActivityNotFoundException::new);
 
         var linkPersisted = linkService.findAllByActivityCode(activityCode);
 
-        var linkResponseDTOs = linkPersisted.stream()
-                .map(link -> new LinkResponseDTO(
-                        link.getActivity().getCode(),
-                        link.getCode(),
-                        link.getTitle(),
-                        link.getUrl()))
+        return linkPersisted.stream()
+                .map(linkConverter::entityToDTO)
                 .collect(Collectors.toList());
-
-        return ResponseEntity.ok().body(linkResponseDTOs);
     }
 
     @PostMapping("/{activityCode}/links")
-    public ResponseEntity<LinkCreatedResponse> registerLink(@PathVariable UUID activityCode,
-                                                            @RequestBody LinkRequestPayload payload) {
-        var activity = activityService.findByCode(activityCode);
-
-        if (activity.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+    @ResponseStatus(HttpStatus.CREATED)
+    public void registerLink(@PathVariable UUID activityCode, @RequestBody NewLinkDTO newLinkDTO) {
+        var activity = activityService.findByCode(activityCode).orElseThrow(ActivityNotFoundException::new);
 
         var newLink = Link.builder()
-                .activity(activity.get())
+                .activity(activity)
                 .code(UUID.randomUUID())
-                .title(payload.title())
-                .url(payload.url())
+                .title(newLinkDTO.title())
+                .url(newLinkDTO.url())
                 .build();
 
-        var linkPersisted = linkService.save(newLink);
-
-        return ResponseEntity.ok().body(new LinkCreatedResponse(linkPersisted.getCode()));
+        linkService.save(newLink);
     }
 
     @DeleteMapping("/{activityCode}/links/{linkCode}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<Void> removeLink(@PathVariable("activityCode") UUID activityCode,
-                                           @PathVariable("linkCode") UUID linkCode) {
-        var activity = activityService.findByCode(activityCode);
-
-        if (activity.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        var link = linkService.findByCode(linkCode);
-
-        if (link.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        linkService.remove(link.get());
-
-        return ResponseEntity.ok().build();
+    public void removeLink(@PathVariable("activityCode") UUID activityCode, @PathVariable("linkCode") UUID linkCode) {
+        linkService.removeByActivityCodeAndLinkCode(activityCode, linkCode);
     }
 
 }

@@ -49,4 +49,8 @@ public class Trip {
     @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt;
 
+    public void confirm() {
+        this.confirmedAt = LocalDateTime.now();
+    }
+
 }

@@ -3,18 +3,14 @@ package br.com.joaopedroafluz.timely.trip;
 import br.com.joaopedroafluz.timely.activity.*;
 import br.com.joaopedroafluz.timely.tripParticipant.TripParticipant;
 import br.com.joaopedroafluz.timely.tripParticipant.TripParticipantService;
-import br.com.joaopedroafluz.timely.user.User;
-import br.com.joaopedroafluz.timely.user.UserDTO;
-import br.com.joaopedroafluz.timely.user.UserService;
+import br.com.joaopedroafluz.timely.user.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -26,48 +22,43 @@ public class TripController {
 
     private final TripService tripService;
     private final UserService userService;
+    private final UserConverter userConverter;
+    private final TripConverter tripConverter;
     private final ActivityService activityService;
+    private final ActivityConverter activityConverter;
     private final TripParticipantService tripParticipantService;
 
     // Trips
     @GetMapping("/{tripCode}")
-    public ResponseEntity<TripResponseDTO> findTripByCode(@PathVariable("tripCode") UUID tripCode) {
-        var trip = tripService.findByCode(tripCode);
+    public TripResponseDTO findTripByCode(@PathVariable("tripCode") UUID tripCode) {
+        var trip = tripService.findByCode(tripCode).orElseThrow(TripNotFoundException::new);
+        var owner = trip.getOwner();
+        var ownerDTO = userConverter.entityToDTO(owner);
 
-        if (trip.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        var owner = trip.get().getOwner();
-
-        var ownerDTO = new UserDTO(owner.getCode(), owner.getName(), owner.getEmail());
-
-        var tripResponseDTO = new TripResponseDTO(trip.get().getCode(), ownerDTO, trip.get().getDestination(),
-                trip.get().getStartsAt(), trip.get().getEndsAt(), trip.get().getCreatedAt(),
-                trip.get().getConfirmedAt());
-
-        return ResponseEntity.ok().body(tripResponseDTO);
+        return tripConverter.entityToDTO(trip, ownerDTO);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<TripCreateResponse> createTrip(@RequestBody NewTripRequestDTO payload) {
-        var owner = userService.findByCode(payload.ownerCode());
-        if (owner.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
+    public TripCodeDTO createTrip(@RequestBody NewTripDTO newTripDTO) {
+        var owner = userService.findByCode(newTripDTO.ownerCode()).orElseThrow(UserNotFoundException::new);
+
+        var startAt = LocalDateTime.parse(newTripDTO.startsAt())
+                .withHour(0).withMinute(0).withSecond(0).withNano(0);
+        var endAt = LocalDateTime.parse(newTripDTO.endsAt())
+                .withHour(23).withMinute(59).withSecond(59).withNano(0);
 
         var newTrip = Trip.builder()
                 .code(UUID.randomUUID())
-                .owner(owner.get())
-                .destination(payload.destination())
-                .startsAt(LocalDateTime.parse(payload.startsAt()))
-                .endsAt(LocalDateTime.parse(payload.endsAt()))
+                .owner(owner)
+                .destination(newTripDTO.destination())
+                .startsAt(startAt)
+                .endsAt(endAt)
                 .build();
 
-        var registeredUsers = userService.findAllByEmail(payload.participantsEmail());
+        var registeredUsers = userService.findAllByEmail(newTripDTO.participantsEmail());
 
-        var newUsers = payload.participantsEmail().stream()
+        var newUsers = newTripDTO.participantsEmail().stream()
                 .filter(email -> registeredUsers.stream()
                         .noneMatch(user -> user.getEmail().equals(email)))
                 .map(email -> User.builder()
@@ -82,7 +73,7 @@ public class TripController {
         allUsers.addAll(newUsers);
 
         List<TripParticipant> participants = allUsers.stream()
-                .filter(user -> payload.participantsEmail().contains(user.getEmail()))
+                .filter(user -> newTripDTO.participantsEmail().contains(user.getEmail()))
                 .map(user -> TripParticipant.builder()
                         .user(user)
                         .trip(newTrip)
@@ -93,77 +84,49 @@ public class TripController {
 
         var persistedTrip = tripService.save(newTrip);
 
-        return ResponseEntity.ok(new TripCreateResponse(persistedTrip.getCode()));
+        return new TripCodeDTO(persistedTrip.getCode());
     }
 
     @PutMapping("/{tripCode}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<Void> updateTrip(@PathVariable("tripCode") UUID tripCode,
-                                           @RequestBody UpdatedTripRequestDTO payload) {
-        var trip = tripService.findByCode(tripCode);
+    public void updateTrip(@PathVariable("tripCode") UUID tripCode,
+                           @RequestBody UpdatedTripDTO updatedTripDTO) {
+        var trip = tripService.findByCode(tripCode).orElseThrow(TripNotFoundException::new);
 
-        if (trip.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        trip.setDestination(updatedTripDTO.destination());
+        trip.setStartsAt(LocalDateTime.parse(updatedTripDTO.startsAt(), DateTimeFormatter.ISO_DATE_TIME));
+        trip.setEndsAt(LocalDateTime.parse(updatedTripDTO.endsAt(), DateTimeFormatter.ISO_DATE_TIME));
 
-        trip.get().setDestination(payload.destination());
-        trip.get().setStartsAt(LocalDateTime.parse(payload.startsAt(), DateTimeFormatter.ISO_DATE_TIME));
-        trip.get().setEndsAt(LocalDateTime.parse(payload.endsAt(), DateTimeFormatter.ISO_DATE_TIME));
-
-        tripService.save(trip.get());
-
-        return ResponseEntity.noContent().build();
+        tripService.save(trip);
     }
 
     @PatchMapping("/{tripCode}/confirm")
-    public ResponseEntity<?> confirmTrip(@PathVariable("tripCode") UUID tripCode) {
-        var trip = tripService.findByCode(tripCode);
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void confirmTrip(@PathVariable("tripCode") UUID tripCode) {
+        var trip = tripService.findByCode(tripCode).orElseThrow(TripNotFoundException::new);
+        trip.confirm();
 
-        if (trip.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        if (trip.get().getConfirmedAt() != null) {
-            return ResponseEntity.badRequest().body("Trip already confirmed");
-        }
-
-        trip.get().setConfirmedAt(LocalDateTime.now());
-
-        tripService.save(trip.get());
-
-        return ResponseEntity.noContent().build();
+        tripService.save(trip);
     }
 
 
     // Participants
     @GetMapping("/{tripCode}/participants")
-    public ResponseEntity<List<UserDTO>> findParticipantsByTripCode(
+    public List<UserDTO> findParticipantsByTripCode(
             @PathVariable("tripCode") UUID tripCode) {
-        var trip = tripService.findByCode(tripCode);
-
-        if (trip.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        tripService.findByCode(tripCode).orElseThrow(TripNotFoundException::new);
 
         var participantsByTripCode = userService.findAllByTripCode(tripCode);
 
-        var participantsDTO = participantsByTripCode.stream()
-                .map(participant -> new UserDTO(participant.getCode(), participant.getName(),
-                        participant.getEmail()))
+        return participantsByTripCode.stream()
+                .map(userConverter::entityToDTO)
                 .toList();
-
-        return ResponseEntity.ok().body(participantsDTO);
     }
 
     @PostMapping("/{tripCode}/participants")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<?> inviteParticipants(@PathVariable UUID tripCode,
-                                                @RequestBody NewParticipantRequestDTO payload) {
-        var trip = tripService.findByCode(tripCode);
-
-        if (trip.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+    public void inviteParticipants(@PathVariable UUID tripCode, @RequestBody NewParticipantDTO payload) {
+        var trip = tripService.findByCode(tripCode).orElseThrow(TripNotFoundException::new);
 
         TripParticipant newParticipant;
 
@@ -172,7 +135,7 @@ public class TripController {
         if (userRegistered.isPresent()) {
             newParticipant = TripParticipant.builder()
                     .user(userRegistered.get())
-                    .trip(trip.get())
+                    .trip(trip)
                     .build();
         } else {
             var newUser = User.builder()
@@ -184,105 +147,60 @@ public class TripController {
 
             newParticipant = TripParticipant.builder()
                     .user(newUser)
-                    .trip(trip.get())
+                    .trip(trip)
                     .build();
         }
 
-        tripService.addParticipant(trip.get(), newParticipant);
-
-        return ResponseEntity.noContent().build();
+        tripService.addParticipant(trip, newParticipant);
     }
 
     @DeleteMapping("/{tripCode}/participants/{participantCode}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public ResponseEntity<?> removeParticipant(@PathVariable("tripCode") UUID tripCode,
-                                               @PathVariable("participantCode") UUID participantCode) {
-        var tripParticipant = tripParticipantService.findByCode(tripCode, participantCode);
-
-        if (tripParticipant.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        tripParticipantService.remove(tripParticipant.get());
-
-        return ResponseEntity.ok().build();
+    public void removeParticipant(@PathVariable("tripCode") UUID tripCode,
+                                  @PathVariable("participantCode") UUID participantCode) {
+        tripParticipantService.removeByTripCodeAndUserCode(tripCode, participantCode);
     }
 
     // Activities
     @GetMapping("/{tripCode}/activities")
-    public ResponseEntity<List<ActivitiesResponseDTO>> findActivitiesByTripCode(@PathVariable("tripCode")
-                                                                                UUID tripCode) {
-        var trip = tripService.findByCode(tripCode);
-
-        if (trip.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+    public List<DayActivitiesDTO> findActivitiesByTripCode(@PathVariable("tripCode") UUID tripCode) {
+        var trip = tripService.findByCode(tripCode).orElseThrow(TripNotFoundException::new);
 
         var activitiesByTripCode = activityService.findActivitiesByTripCode(tripCode);
 
         var activityResponseDTOS = activitiesByTripCode.stream()
-                .map(activity -> new ActivityDTO(
-                        activity.getTrip().getCode(),
-                        activity.getCode(),
-                        activity.getTitle(),
-                        activity.getDescription(),
-                        activity.getOccursAt()))
+                .map(activityConverter::entityToDTO)
                 .toList();
 
-        var dates = getDatesBetween(trip.get().getStartsAt(), trip.get().getEndsAt());
+        var dates = getDatesBetween(trip.getStartsAt(), trip.getEndsAt());
 
-        var activitiesResponseDTOS = dates.stream().map((date) -> (
-                new ActivitiesResponseDTO(date,
-                        activityResponseDTOS.stream()
-                                .filter((activity) -> activity.occursAt().getDayOfYear() == date.getDayOfYear())
-                                .sorted(Comparator.comparing(ActivityDTO::occursAt))
-                                .collect(Collectors.toList()))
-        )).collect(Collectors.toList());
-
-        return ResponseEntity.ok().body(activitiesResponseDTOS);
+        return dates.stream()
+                .map((date) -> activityConverter.dtoAndDateToDayActivitiesDTO(activityResponseDTOS, date))
+                .collect(Collectors.toList());
     }
+
 
     @PostMapping("/{tripCode}/activities")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<ActivityCreatedResponse> createActivity(@PathVariable UUID tripCode,
-                                                                  @RequestBody ActivityRequestPayload payload) {
-        var trip = tripService.findByCode(tripCode);
-
-        if (trip.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+    public void createActivity(@PathVariable UUID tripCode, @RequestBody NewActivityDTO newActivityDTO) {
+        var trip = tripService.findByCode(tripCode).orElseThrow(TripNotFoundException::new);
 
         var newActivity = Activity.builder()
-                .trip(trip.get())
+                .trip(trip)
                 .code(UUID.randomUUID())
-                .title(payload.title())
-                .description(payload.description())
-                .occursAt(LocalDateTime.parse(payload.occursAt(), DateTimeFormatter.ISO_DATE_TIME))
+                .title(newActivityDTO.title())
+                .description(newActivityDTO.description())
+                .occursAt(LocalDateTime.parse(newActivityDTO.occursAt(), DateTimeFormatter.ISO_DATE_TIME))
                 .build();
 
-        var activityPersisted = activityService.save(newActivity);
-
-        return ResponseEntity.ok(new ActivityCreatedResponse(activityPersisted.getCode()));
+        activityService.save(newActivity);
     }
 
     @DeleteMapping("/{tripCode}/activities/{activityCode}")
-    public ResponseEntity<Void> removeActivity(@PathVariable("tripCode") UUID tripCode,
-                                               @PathVariable("activityCode") UUID activityCode) {
-        var trip = tripService.findByCode(tripCode);
-
-        if (trip.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        var activity = activityService.findByCode(activityCode);
-
-        if (activity.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        activityService.remove(activity.get());
-
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeActivity(@PathVariable("tripCode") UUID tripCode,
+                               @PathVariable("activityCode") UUID activityCode) {
+        activityService.removeByCodeAndTripCode(activityCode, tripCode);
     }
 
     public static List<LocalDateTime> getDatesBetween(LocalDateTime startDate, LocalDateTime endDate) {

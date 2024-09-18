@@ -1,5 +1,6 @@
 package br.com.joaopedroafluz.timely.user;
 
+import br.com.joaopedroafluz.timely.exceptions.InvalidRequestException;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,11 +35,10 @@ public class UserService {
 
     public User registerUser(User user) {
         findByEmail(user.getEmail()).ifPresent(existingUser -> {
-            throw new IllegalStateException("Email already in use");
+            throw new InvalidRequestException("E-mail já está em uso.");
         });
 
         var hashedPassword = passwordEncoder.encode(user.getPassword());
-
         user.setPassword(hashedPassword);
 
         return save(user);
