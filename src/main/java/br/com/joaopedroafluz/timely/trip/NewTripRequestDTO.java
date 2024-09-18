@@ -1,11 +1,11 @@
 package br.com.joaopedroafluz.timely.trip;
 
 import java.util.List;
+import java.util.UUID;
 
-public record TripRequestPayload(
-        String ownerName,
-        String ownerEmail,
-        List<String> emailsToInvite,
+public record NewTripRequestDTO(
+        UUID ownerCode,
+        List<String> participantsEmail,
         String destination,
         String startsAt,
         String endsAt

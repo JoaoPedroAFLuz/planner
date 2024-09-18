@@ -19,14 +19,17 @@ public class Link {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
+    private UUID code;
+
     @ManyToOne
     @JoinColumn(name = "activity_id", nullable = false)
     private Activity activity;
 
-    private UUID code;
-
+    @Column(nullable = false)
     private String title;
 
+    @Column(nullable = false)
     private String url;
 
 }

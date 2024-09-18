@@ -1,18 +1,19 @@
 package br.com.joaopedroafluz.timely.trip;
 
+import br.com.joaopedroafluz.timely.tripParticipant.TripParticipant;
+import br.com.joaopedroafluz.timely.user.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "trips")
@@ -22,14 +23,17 @@ public class Trip {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, nullable = false)
     private UUID code;
 
-    @Column(name = "owner_name", nullable = false)
-    private String ownerName;
+    @ManyToOne
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
 
-    @Column(name = "owner_email", nullable = false)
-    private String ownerEmail;
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TripParticipant> participants;
 
+    @Column(nullable = false)
     private String destination;
 
     @Column(name = "starts_at", nullable = false)
@@ -38,22 +42,11 @@ public class Trip {
     @Column(name = "ends_at", nullable = false)
     private LocalDateTime endsAt;
 
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
     @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt;
 
-
-    public Trip(TripRequestPayload payload) {
-        this.code = UUID.randomUUID();
-        this.ownerName = payload.ownerName();
-        this.ownerEmail = payload.ownerEmail();
-        this.destination = payload.destination();
-        this.startsAt = LocalDateTime.parse(payload.startsAt(), DateTimeFormatter.ISO_DATE_TIME)
-                .toLocalDate()
-                .atStartOfDay();
-        this.endsAt = LocalDateTime.parse(payload.endsAt(), DateTimeFormatter.ISO_DATE_TIME)
-                .toLocalDate()
-                .atStartOfDay()
-                .plusDays(1)
-                .minusSeconds(1);
-    }
 }
