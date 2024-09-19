@@ -1,7 +1,7 @@
 package br.com.joaopedroafluz.timely.user;
 
-import br.com.joaopedroafluz.timely.tripParticipant.TripParticipant;
 import br.com.joaopedroafluz.timely.trip.Trip;
+import br.com.joaopedroafluz.timely.tripParticipant.TripParticipant;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

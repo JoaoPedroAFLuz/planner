@@ -12,8 +12,8 @@ public class ActivityConverter {
 
     public ActivityDTO entityToDTO(Activity activity) {
         return new ActivityDTO(
-                activity.getTrip().getCode(),
                 activity.getCode(),
+                activity.getTrip().getCode(),
                 activity.getTitle(),
                 activity.getDescription(),
                 activity.getOccursAt());

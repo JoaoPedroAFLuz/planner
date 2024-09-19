@@ -43,9 +43,9 @@ public class TripController {
     public TripCodeDTO createTrip(@RequestBody NewTripDTO newTripDTO) {
         var owner = userService.findByCode(newTripDTO.ownerCode()).orElseThrow(UserNotFoundException::new);
 
-        var startAt = LocalDateTime.parse(newTripDTO.startsAt())
+        var startAt = LocalDateTime.parse(newTripDTO.startsAt(), DateTimeFormatter.ISO_DATE_TIME)
                 .withHour(0).withMinute(0).withSecond(0).withNano(0);
-        var endAt = LocalDateTime.parse(newTripDTO.endsAt())
+        var endAt = LocalDateTime.parse(newTripDTO.endsAt(), DateTimeFormatter.ISO_DATE_TIME)
                 .withHour(23).withMinute(59).withSecond(59).withNano(0);
 
         var newTrip = Trip.builder()
@@ -56,31 +56,33 @@ public class TripController {
                 .endsAt(endAt)
                 .build();
 
-        var registeredUsers = userService.findAllByEmail(newTripDTO.participantsEmail());
+        if (!newTripDTO.participantsEmail().isEmpty()) {
+            var registeredUsers = userService.findAllByEmail(newTripDTO.participantsEmail());
 
-        var newUsers = newTripDTO.participantsEmail().stream()
-                .filter(email -> registeredUsers.stream()
-                        .noneMatch(user -> user.getEmail().equals(email)))
-                .map(email -> User.builder()
-                        .code(UUID.randomUUID())
-                        .email(email)
-                        .build())
-                .toList();
+            var newUsers = newTripDTO.participantsEmail().stream()
+                    .filter(email -> registeredUsers.stream()
+                            .noneMatch(user -> user.getEmail().equals(email)))
+                    .map(email -> User.builder()
+                            .code(UUID.randomUUID())
+                            .email(email)
+                            .build())
+                    .toList();
 
-        userService.saveAll(newUsers);
+            userService.saveAll(newUsers);
 
-        var allUsers = new ArrayList<>(registeredUsers);
-        allUsers.addAll(newUsers);
+            var allUsers = new ArrayList<>(registeredUsers);
+            allUsers.addAll(newUsers);
 
-        List<TripParticipant> participants = allUsers.stream()
-                .filter(user -> newTripDTO.participantsEmail().contains(user.getEmail()))
-                .map(user -> TripParticipant.builder()
-                        .user(user)
-                        .trip(newTrip)
-                        .build())
-                .toList();
+            List<TripParticipant> participants = allUsers.stream()
+                    .filter(user -> newTripDTO.participantsEmail().contains(user.getEmail()))
+                    .map(user -> TripParticipant.builder()
+                            .user(user)
+                            .trip(newTrip)
+                            .build())
+                    .toList();
 
-        newTrip.setParticipants(participants);
+            newTrip.setParticipants(participants);
+        }
 
         var persistedTrip = tripService.save(newTrip);
 
@@ -92,7 +94,6 @@ public class TripController {
     public void updateTrip(@PathVariable("tripCode") UUID tripCode,
                            @RequestBody UpdatedTripDTO updatedTripDTO) {
         var trip = tripService.findByCode(tripCode).orElseThrow(TripNotFoundException::new);
-
         trip.setDestination(updatedTripDTO.destination());
         trip.setStartsAt(LocalDateTime.parse(updatedTripDTO.startsAt(), DateTimeFormatter.ISO_DATE_TIME));
         trip.setEndsAt(LocalDateTime.parse(updatedTripDTO.endsAt(), DateTimeFormatter.ISO_DATE_TIME));
@@ -114,8 +115,6 @@ public class TripController {
     @GetMapping("/{tripCode}/participants")
     public List<UserDTO> findParticipantsByTripCode(
             @PathVariable("tripCode") UUID tripCode) {
-        tripService.findByCode(tripCode).orElseThrow(TripNotFoundException::new);
-
         var participantsByTripCode = userService.findAllByTripCode(tripCode);
 
         return participantsByTripCode.stream()
@@ -167,18 +166,16 @@ public class TripController {
         var trip = tripService.findByCode(tripCode).orElseThrow(TripNotFoundException::new);
 
         var activitiesByTripCode = activityService.findActivitiesByTripCode(tripCode);
-
-        var activityResponseDTOS = activitiesByTripCode.stream()
+        var activitiesDTO = activitiesByTripCode.stream()
                 .map(activityConverter::entityToDTO)
                 .toList();
 
         var dates = getDatesBetween(trip.getStartsAt(), trip.getEndsAt());
 
         return dates.stream()
-                .map((date) -> activityConverter.dtoAndDateToDayActivitiesDTO(activityResponseDTOS, date))
+                .map((date) -> activityConverter.dtoAndDateToDayActivitiesDTO(activitiesDTO, date))
                 .collect(Collectors.toList());
     }
-
 
     @PostMapping("/{tripCode}/activities")
     @ResponseStatus(HttpStatus.CREATED)
