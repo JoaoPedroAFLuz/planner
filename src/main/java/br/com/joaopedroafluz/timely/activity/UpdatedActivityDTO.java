@@ -1,4 +1,4 @@
-package br.com.joaopedroafluz.timely.user;
+package br.com.joaopedroafluz.timely.activity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,10 +9,10 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class NewUserDTO {
+public class UpdatedActivityDTO {
 
-    private String name;
-    private String email;
-    private String password;
+    private String title;
+    private String description;
+    private String occursAt;
 
 }

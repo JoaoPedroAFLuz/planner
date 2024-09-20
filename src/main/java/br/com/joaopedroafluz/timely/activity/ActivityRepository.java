@@ -10,6 +10,8 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
 
     Optional<Activity> findByCode(UUID code);
 
+    Optional<Activity> findByCodeAndTripCode(UUID code, UUID tripCode);
+
     List<Activity> findAllByTripCode(UUID tripCode);
 
 }

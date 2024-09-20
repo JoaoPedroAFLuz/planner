@@ -1,4 +1,4 @@
-package br.com.joaopedroafluz.timely.authorization;
+package br.com.joaopedroafluz.timely.auth;
 
 import br.com.joaopedroafluz.timely.user.User;
 import br.com.joaopedroafluz.timely.user.UserNotFoundException;
@@ -98,7 +98,7 @@ public class TokenService {
     }
 
     private Instant genExpirationDate() {
-        return Instant.now().plus(10, ChronoUnit.MINUTES);
+        return Instant.now().plus(10, ChronoUnit.HOURS);
     }
 
 }

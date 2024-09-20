@@ -1,15 +1,39 @@
 package br.com.joaopedroafluz.timely.trip;
 
-import br.com.joaopedroafluz.timely.user.UserDTO;
+import br.com.joaopedroafluz.timely.auth.AuthorizationUtils;
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.UUID;
+
 @Component
+@RequiredArgsConstructor
 public class TripConverter {
 
-    public TripResponseDTO entityToDTO(Trip trip, UserDTO ownerDTO) {
-        return new TripResponseDTO(trip.getCode(), ownerDTO, trip.getDestination(),
-                trip.getStartsAt(), trip.getEndsAt(), trip.getCreatedAt(),
-                trip.getConfirmedAt());
+    private final ModelMapper modelMapper;
+
+    public TripResponseDTO entityToDTO(Trip trip) {
+        return modelMapper.map(trip, TripResponseDTO.class);
+    }
+
+    public Trip dtoToEntity(NewTripDTO newTripDTO) {
+        var owner = AuthorizationUtils.getAuthenticatedUser();
+
+        var startAt = LocalDateTime.parse(newTripDTO.getStartsAt(), DateTimeFormatter.ISO_DATE_TIME)
+                .withHour(0).withMinute(0).withSecond(0).withNano(0);
+        var endAt = LocalDateTime.parse(newTripDTO.getEndsAt(), DateTimeFormatter.ISO_DATE_TIME)
+                .withHour(23).withMinute(59).withSecond(59).withNano(0);
+
+        return Trip.builder()
+                .code(UUID.randomUUID())
+                .owner(owner)
+                .destination(newTripDTO.getDestination())
+                .startsAt(startAt)
+                .endsAt(endAt)
+                .build();
     }
 
 }

@@ -50,6 +50,10 @@ public class Trip {
     private LocalDateTime confirmedAt;
 
     public void confirm() {
+        if (confirmedAt != null) {
+            throw new TripAlreadyConfirmedException();
+        }
+
         this.confirmedAt = LocalDateTime.now();
     }
 

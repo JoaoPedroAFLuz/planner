@@ -1,5 +1,7 @@
 package br.com.joaopedroafluz.timely.activity;
 
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -8,22 +10,25 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class ActivityConverter {
 
+    private final ModelMapper modelMapper;
+
+
     public ActivityDTO entityToDTO(Activity activity) {
-        return new ActivityDTO(
-                activity.getCode(),
-                activity.getTrip().getCode(),
-                activity.getTitle(),
-                activity.getDescription(),
-                activity.getOccursAt());
+        return modelMapper.map(activity, ActivityDTO.class);
     }
 
-    public DayActivitiesDTO dtoAndDateToDayActivitiesDTO(List<ActivityDTO> activityResponseDTOS, LocalDateTime date) {
+    public void copyToEntity(UpdatedActivityDTO activityDTO, Activity activity) {
+        modelMapper.map(activityDTO, activity);
+    }
+
+    public DayActivitiesDTO dtoAndDateToDayActivitiesDTO(List<ActivityDTO> activityResponseDTOs, LocalDateTime date) {
         return new DayActivitiesDTO(date,
-                activityResponseDTOS.stream()
-                        .filter((activity) -> activity.occursAt().getDayOfYear() == date.getDayOfYear())
-                        .sorted(Comparator.comparing(ActivityDTO::occursAt))
+                activityResponseDTOs.stream()
+                        .filter((activity) -> activity.getOccursAt().getDayOfYear() == date.getDayOfYear())
+                        .sorted(Comparator.comparing(ActivityDTO::getOccursAt))
                         .collect(Collectors.toList()));
     }
 

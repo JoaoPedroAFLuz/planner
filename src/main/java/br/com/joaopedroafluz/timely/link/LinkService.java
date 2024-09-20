@@ -4,8 +4,9 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
+
+import static br.com.joaopedroafluz.timely.auth.AuthorizationUtils.throwExceptionIfUserDoesNotHavePermission;
 
 @Service
 @AllArgsConstructor
@@ -14,24 +15,33 @@ public class LinkService {
     private final LinkRepository linkRepository;
 
 
-    public Optional<Link> findByCode(UUID linkCode) {
-        return linkRepository.findByCode(linkCode);
+    public Link findByCodeAndActivityCode(UUID linkCode, UUID activityCode) {
+        var link = linkRepository.findByCodeAndActivityCode(linkCode, activityCode)
+                .orElseThrow(LinkNotFoundException::new);
+
+        throwExceptionIfUserDoesNotHavePermission(link.getActivity().getTrip());
+
+        return link;
     }
 
     public List<Link> findAllByActivityCode(UUID activityCode) {
-        return linkRepository.findAllByActivityCode(activityCode);
+        var links = linkRepository.findAllByActivityCode(activityCode);
+
+        throwExceptionIfUserDoesNotHavePermission(links.get(0).getActivity().getTrip());
+
+        return links;
     }
 
     public void save(Link link) {
+        throwExceptionIfUserDoesNotHavePermission(link.getActivity().getTrip());
+
         linkRepository.save(link);
     }
 
     public void removeByActivityCodeAndLinkCode(UUID activityCode, UUID linkCode) {
-        var link = findByCode(linkCode).orElseThrow(LinkNotFoundException::new);
+        var link = findByCodeAndActivityCode(linkCode, activityCode);
 
-        if (!link.getActivity().getCode().equals(activityCode)) {
-            throw new InvalidLinkRequestException("Link não pertence à atividade informada");
-        }
+        throwExceptionIfUserDoesNotHavePermission(link.getActivity().getTrip());
 
         linkRepository.delete(link);
     }

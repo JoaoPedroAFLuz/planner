@@ -1,4 +1,4 @@
-package br.com.joaopedroafluz.timely.authorization;
+package br.com.joaopedroafluz.timely.auth;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -27,6 +27,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
         tokenService.getUserDetailsFromTokenIfValid(authorizationHeader)
                 .ifPresent(userDetails -> {
+                    AuthorizationUtils.setAuthenticatedUser(userDetails.getUser());
                     var auth = new UsernamePasswordAuthenticationToken(userDetails, null,
                             userDetails.getAuthorities());
 

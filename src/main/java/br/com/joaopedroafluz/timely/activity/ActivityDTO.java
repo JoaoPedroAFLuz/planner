@@ -1,7 +1,21 @@
 package br.com.joaopedroafluz.timely.activity;
 
+import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record ActivityDTO(UUID code, UUID tripCode, String title, String description, LocalDateTime occursAt) {
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ActivityDTO {
+
+    private UUID code;
+    private UUID tripCode;
+    private String title;
+    private String description;
+    private LocalDateTime occursAt;
+
 }

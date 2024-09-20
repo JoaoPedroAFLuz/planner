@@ -35,6 +35,7 @@
     <properties>
         <java.version>17</java.version>
         <jwt.version>4.4.0</jwt.version>
+        <modelmapper.version>3.2.1</modelmapper.version>
     </properties>
 
     <dependencies>
@@ -93,6 +94,13 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.modelmapper</groupId>
+            <artifactId>modelmapper</artifactId>
+            <version>${modelmapper.version}</version>
+        </dependency>
+
     </dependencies>
 
     <build>

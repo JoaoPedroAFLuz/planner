@@ -17,10 +17,6 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
 
-    public Optional<User> findByCode(UUID code) {
-        return userRepository.findByCode(code);
-    }
-
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
@@ -33,15 +29,24 @@ public class UserService {
         return userRepository.findAllByTripsAsParticipantTripCode(tripCode);
     }
 
-    public User registerUser(User user) {
-        findByEmail(user.getEmail()).ifPresent(existingUser -> {
+    public User registerUser(User newUser) {
+        var registeredUser = findByEmail(newUser.getEmail());
+
+        if (registeredUser.isPresent() && registeredUser.get().getPassword() != null) {
             throw new InvalidRequestException("E-mail já está em uso.");
-        });
+        }
 
-        var hashedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(hashedPassword);
+        if (registeredUser.isPresent()) {
+            registeredUser.get().setName(newUser.getName());
+            registeredUser.get().setPassword(newUser.getPassword());
+            newUser = registeredUser.get();
+        }
 
-        return save(user);
+        var hashedPassword = passwordEncoder.encode(newUser.getPassword());
+        newUser.setPassword(hashedPassword);
+        newUser.setCode(UUID.randomUUID());
+
+        return save(newUser);
     }
 
     public User save(User user) {

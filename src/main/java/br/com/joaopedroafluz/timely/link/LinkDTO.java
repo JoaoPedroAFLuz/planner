@@ -1,6 +1,20 @@
 package br.com.joaopedroafluz.timely.link;
 
+import lombok.*;
+
 import java.util.UUID;
 
-public record LinkDTO(UUID activityCode, UUID linkCode, String title, String url) {
+
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class LinkDTO {
+
+    private UUID code;
+    private UUID activityCode;
+    private String title;
+    private String url;
+
 }

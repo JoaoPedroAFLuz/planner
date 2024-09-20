@@ -1,6 +1,7 @@
-package br.com.joaopedroafluz.timely.authorization;
+package br.com.joaopedroafluz.timely.auth;
 
 import br.com.joaopedroafluz.timely.user.User;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -9,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
+@Getter
 @RequiredArgsConstructor
 public class UserDetailsAdapter implements UserDetails {
 

@@ -1,4 +1,4 @@
-package br.com.joaopedroafluz.timely.authorization;
+package br.com.joaopedroafluz.timely.auth;
 
 import br.com.joaopedroafluz.timely.user.NewUserDTO;
 import br.com.joaopedroafluz.timely.user.UserConverter;

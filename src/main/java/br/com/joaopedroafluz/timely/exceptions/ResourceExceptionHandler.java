@@ -9,6 +9,7 @@ import org.springframework.security.authentication.InsufficientAuthenticationExc
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Log4j2
 @RestControllerAdvice
@@ -17,45 +18,46 @@ public class ResourceExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponseDTO handleObjectNotFound(EntityNotFoundException e, HttpServletRequest request) {
-        return ErrorResponseDTO.builder()
-                .status(HttpStatus.NOT_FOUND.value())
-                .error("Recurso não encontrado")
-                .message(e.getMessage())
-                .path(request.getRequestURI())
-                .build();
+    public ErrorResponseDTO handleObjectNotFoundException(EntityNotFoundException e, HttpServletRequest request) {
+        return handleCustomException(HttpStatus.NOT_FOUND, "Recurso não encontrado", e.getMessage(), request);
     }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponseDTO handleResourceNotFoundException(HttpServletRequest request) {
+        return handleCustomException(HttpStatus.NOT_FOUND, "Recurso não encontrado", "Recurso não encontrado", request);
+    }
+
 
     @ExceptionHandler(InvalidRequestException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponseDTO handleInvalidRequest(InvalidRequestException e, HttpServletRequest request) {
-        return ErrorResponseDTO.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error("Requisição inválida")
-                .message(e.getMessage())
-                .path(request.getRequestURI())
-                .build();
+    public ErrorResponseDTO handleInvalidRequestException(InvalidRequestException exception,
+                                                          HttpServletRequest request) {
+        return handleCustomException(HttpStatus.BAD_REQUEST, "Requisição inválida", exception.getMessage(), request);
     }
 
     @ExceptionHandler({InsufficientAuthenticationException.class, AccessDeniedException.class})
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ErrorResponseDTO handleAuthenticationException(HttpServletRequest request) {
-        return ErrorResponseDTO.builder()
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .error("Acesso não autorizado")
-                .message("Você não possui permissão para acessar este recurso")
-                .path(request.getRequestURI())
-                .build();
+    public ErrorResponseDTO handleAuthenticationException(Exception ex, HttpServletRequest request) {
+        var defaultMessage = "Full authentication is required to access this resource";
+        var message = ex.getMessage().equals(defaultMessage) ? "Acesso não autorizado" : ex.getMessage();
+
+        return handleCustomException(HttpStatus.UNAUTHORIZED, "Acesso não autorizado", message, request);
     }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponseDTO handleException(Exception e, HttpServletRequest request) {
-        log.error(e.getMessage(), e);
+        return handleCustomException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(),
+                "Ocorreu um erro desconhecido contate o administrador do sistema", request);
+    }
+
+    private ErrorResponseDTO handleCustomException(HttpStatus status, String errorMessage,
+                                                   String message, HttpServletRequest request) {
         return ErrorResponseDTO.builder()
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .error(e.getMessage())
-                .message("Ocorreu um erro desconhecido contate o administrador do sistema")
+                .status(status.value())
+                .error(errorMessage)
+                .message(message)
                 .path(request.getRequestURI())
                 .build();
     }

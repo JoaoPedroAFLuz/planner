@@ -1,6 +1,6 @@
 package br.com.joaopedroafluz.timely.configs;
 
-import br.com.joaopedroafluz.timely.authorization.SecurityFilter;
+import br.com.joaopedroafluz.timely.auth.SecurityFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
