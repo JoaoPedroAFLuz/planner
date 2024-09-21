@@ -17,7 +17,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class SecurityFilter extends OncePerRequestFilter {
 
-    private final TokenService tokenService;
+    private final AccessTokenService accessTokenService;
 
 
     @Override
@@ -25,9 +25,10 @@ public class SecurityFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         var authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        tokenService.getUserDetailsFromTokenIfValid(authorizationHeader)
+        accessTokenService.getUserDetailsFromTokenIfValid(authorizationHeader)
                 .ifPresent(userDetails -> {
                     AuthorizationUtils.setAuthenticatedUser(userDetails.getUser());
+
                     var auth = new UsernamePasswordAuthenticationToken(userDetails, null,
                             userDetails.getAuthorities());
 

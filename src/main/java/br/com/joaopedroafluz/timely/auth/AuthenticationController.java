@@ -15,9 +15,10 @@ import org.springframework.web.bind.annotation.*;
 public class AuthenticationController {
 
     private final UserService userService;
-    private final TokenService tokenService;
     private final UserConverter userConverter;
     private final PasswordEncoder passwordEncoder;
+    private final AccessTokenService accessTokenService;
+    private final RefreshTokenService refreshTokenService;
 
 
     @PostMapping("/login")
@@ -31,9 +32,18 @@ public class AuthenticationController {
             throw new InvalidLoginRequestException("Credenciais inválidas");
         }
 
-        var token = tokenService.generateToken(user);
+        var accessToken = accessTokenService.generateAccessToken(user);
+        var refreshToken = refreshTokenService.generateToken(user);
 
-        return new LoginDTO(token);
+        return new LoginDTO(accessToken, refreshToken.getToken());
+    }
+
+    @PostMapping("/refresh")
+    public LoginDTO refresh(@RequestBody NewRefreshTokenDTO newRefreshTokenDTO) {
+        var refreshToken = refreshTokenService.regenerateRefreshToken(newRefreshTokenDTO.refreshToken());
+        var accessToken = accessTokenService.generateAccessToken(refreshToken.getUser());
+
+        return new LoginDTO(accessToken, refreshToken.getToken());
     }
 
     @PostMapping("/register")

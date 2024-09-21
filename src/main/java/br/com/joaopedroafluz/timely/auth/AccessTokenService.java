@@ -21,20 +21,20 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class TokenService {
+public class AccessTokenService {
 
-    @Value("${api.security.token.secret}")
-    private String secret;
+    @Value("${api.security.token.access_secret}")
+    private String accessTokenSecret;
 
     private final UserService userService;
 
 
-    public String generateToken(User user) {
+    public String generateAccessToken(User user) {
         try {
-            var algorithm = Algorithm.HMAC256(secret);
+            var algorithm = Algorithm.HMAC256(accessTokenSecret);
 
             return JWT.create()
-                    .withIssuer("auth-api")
+                    .withIssuer("timely-api")
                     .withSubject(user.getEmail())
                     .withExpiresAt(genExpirationDate())
                     .sign(algorithm);
@@ -64,14 +64,13 @@ public class TokenService {
     }
 
     private Map<String, Claim> getClaims(String token) {
-        var algorithm = Algorithm.HMAC256(secret);
+        var algorithm = Algorithm.HMAC256(accessTokenSecret);
 
         return JWT.require(algorithm)
-                .withIssuer("auth-api")
+                .withIssuer("timely-api")
                 .build()
                 .verify(token)
                 .getClaims();
-
     }
 
     private boolean isValidToken(String token) {
@@ -87,7 +86,6 @@ public class TokenService {
         final var claims = getClaims(token);
         return claims.get("sub").as(String.class);
     }
-
 
     private String recoverToken(String authorizationHeader) {
         if (StringUtils.isBlank(authorizationHeader) || !authorizationHeader.startsWith("Bearer ")) {

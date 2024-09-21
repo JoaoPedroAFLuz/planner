@@ -1,4 +1,4 @@
 package br.com.joaopedroafluz.timely.auth;
 
-public record LoginDTO(String token) {
+public record LoginDTO(String accessToken, String refreshToken) {
 }
