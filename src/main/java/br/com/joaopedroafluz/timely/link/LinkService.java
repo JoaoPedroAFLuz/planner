@@ -27,7 +27,9 @@ public class LinkService {
     public List<Link> findAllByActivityCode(UUID activityCode) {
         var links = linkRepository.findAllByActivityCode(activityCode);
 
-        throwExceptionIfUserDoesNotHavePermission(links.get(0).getActivity().getTrip());
+        if (!links.isEmpty()) {
+            throwExceptionIfUserDoesNotHavePermission(links.get(0).getActivity().getTrip());
+        }
 
         return links;
     }

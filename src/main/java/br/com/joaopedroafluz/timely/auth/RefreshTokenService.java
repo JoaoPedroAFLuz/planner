@@ -1,6 +1,5 @@
 package br.com.joaopedroafluz.timely.auth;
 
-import br.com.joaopedroafluz.timely.exceptions.InvalidRequestException;
 import br.com.joaopedroafluz.timely.user.User;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -28,7 +27,7 @@ public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
 
 
-    public Optional<RefreshToken> findByTokenOrFail(String refreshToken) {
+    public Optional<RefreshToken> findByToken(String refreshToken) {
         return refreshTokenRepository.findByToken(refreshToken);
     }
 
@@ -55,17 +54,18 @@ public class RefreshTokenService {
         return refreshToken;
     }
 
-    @Transactional(noRollbackFor = InvalidRequestException.class)
+    @Transactional(noRollbackFor = InvalidTokenException.class)
     public RefreshToken regenerateRefreshToken(String refreshToken) {
         if (!isValidRefreshToken(refreshToken)) {
             removeByToken(refreshToken);
-            throw new InvalidRequestException("Refresh token inválido");
+            throw new InvalidTokenException("Refresh token inválido");
         }
-        var savedToken = findByTokenOrFail(refreshToken);
+
+        var savedToken = findByToken(refreshToken);
 
         if (savedToken.isEmpty()) {
             removeAllByUserEmail(getUsername(refreshToken));
-            throw new InvalidRequestException("Refresh token inválido");
+            throw new InvalidTokenException("Refresh token inválido");
         }
 
         var user = savedToken.get().getUser();

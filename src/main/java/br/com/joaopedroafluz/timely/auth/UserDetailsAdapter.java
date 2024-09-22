@@ -21,8 +21,6 @@ public class UserDetailsAdapter implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         var roleUser = new SimpleGrantedAuthority("ROLE_USER");
 
-        System.out.println(roleUser);
-
         return List.of(roleUser);
     }
 
