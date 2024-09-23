@@ -40,7 +40,7 @@ public class TripActivityController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public void createActivity(@PathVariable UUID tripCode, @RequestBody NewActivityDTO newActivityDTO) {
+    public ActivityCodeDTO createActivity(@PathVariable UUID tripCode, @RequestBody NewActivityDTO newActivityDTO) {
         var trip = tripService.findByCodeOrFail(tripCode);
 
         var newActivity = Activity.builder()
@@ -52,6 +52,8 @@ public class TripActivityController {
                 .build();
 
         activityService.save(newActivity);
+
+        return new ActivityCodeDTO(newActivity.getCode());
     }
 
     @PutMapping("/{activityCode}")

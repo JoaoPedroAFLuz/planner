@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,6 +15,6 @@ public class UpdatedActivityDTO {
 
     private String title;
     private String description;
-    private String occursAt;
+    private LocalDateTime occursAt;
 
 }
