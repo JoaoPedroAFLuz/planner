@@ -3,8 +3,6 @@ package br.com.joaopedroafluz.timely.tripParticipant;
 import br.com.joaopedroafluz.timely.trip.NewParticipantDTO;
 import br.com.joaopedroafluz.timely.trip.TripService;
 import br.com.joaopedroafluz.timely.user.User;
-import br.com.joaopedroafluz.timely.user.UserConverter;
-import br.com.joaopedroafluz.timely.user.UserDTO;
 import br.com.joaopedroafluz.timely.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,16 +18,16 @@ public class TripParticipantController {
 
     private final TripService tripService;
     private final UserService userService;
-    private final UserConverter userConverter;
     private final TripParticipantService tripParticipantService;
+    private final TripParticipantConverter tripParticipantConverter;
 
 
     @GetMapping
-    public List<UserDTO> findParticipantsByTripCode(@PathVariable("tripCode") UUID tripCode) {
-        var participantsByTripCode = userService.findAllByTripCode(tripCode);
+    public List<TripParticipantDTO> findParticipantsByTripCode(@PathVariable("tripCode") UUID tripCode) {
+        var participantsByTripCode = tripParticipantService.findAllByTripCode(tripCode);
 
         return participantsByTripCode.stream()
-                .map(userConverter::entityToDTO)
+                .map(tripParticipantConverter::entityToDTO)
                 .toList();
     }
 

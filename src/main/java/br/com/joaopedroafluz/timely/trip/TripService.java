@@ -1,5 +1,6 @@
 package br.com.joaopedroafluz.timely.trip;
 
+import br.com.joaopedroafluz.timely.auth.AuthorizationUtils;
 import br.com.joaopedroafluz.timely.tripParticipant.TripParticipant;
 import br.com.joaopedroafluz.timely.user.User;
 import br.com.joaopedroafluz.timely.user.UserService;
@@ -28,6 +29,12 @@ public class TripService {
         throwExceptionIfUserDoesNotHavePermission(trip);
 
         return trip;
+    }
+
+    public List<Trip> findAllByLoggedUser() {
+        var user = AuthorizationUtils.getAuthenticatedUser();
+
+        return tripRepository.findAllByLoggedUser(user);
     }
 
     public Trip register(NewTripDTO newTripDTO) {

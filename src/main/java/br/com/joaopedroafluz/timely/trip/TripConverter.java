@@ -15,8 +15,12 @@ public class TripConverter {
 
     private final ModelMapper modelMapper;
 
-    public TripResponseDTO entityToDTO(Trip trip) {
-        return modelMapper.map(trip, TripResponseDTO.class);
+    public TripDTO entityToDTO(Trip trip) {
+        return modelMapper.map(trip, TripDTO.class);
+    }
+
+    public ResumedTripDTO entityToResumedDTO(Trip trip) {
+        return modelMapper.map(trip, ResumedTripDTO.class);
     }
 
     public Trip dtoToEntity(NewTripDTO newTripDTO) {

@@ -11,13 +11,13 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TripResponseDTO {
+public class TripDTO {
 
     private UUID code;
     private UserDTO owner;
     private String destination;
     private LocalDateTime startsAt;
-    private java.time.LocalDateTime endsAt;
+    private LocalDateTime endsAt;
     private LocalDateTime createdAt;
     private LocalDateTime confirmedAt;
 

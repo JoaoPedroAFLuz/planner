@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -16,9 +17,17 @@ public class TripController {
     private final TripService tripService;
     private final TripConverter tripConverter;
 
+    @GetMapping()
+    public List<ResumedTripDTO> findUserTrips() {
+        var trip = tripService.findAllByLoggedUser();
+
+        return trip.stream()
+                .map(tripConverter::entityToResumedDTO)
+                .toList();
+    }
 
     @GetMapping("/{tripCode}")
-    public TripResponseDTO findTripByCode(@PathVariable("tripCode") UUID tripCode) {
+    public TripDTO findTripByCode(@PathVariable("tripCode") UUID tripCode) {
         var trip = tripService.findByCodeOrFail(tripCode);
 
         return tripConverter.entityToDTO(trip);
